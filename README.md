@@ -1,2 +1,2 @@
 # GetOUT
-Final Course game
+Shooter game
