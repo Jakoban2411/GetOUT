@@ -25,7 +25,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	bool CastSphere(FVector Location, float Radius);
-	bool GetEmptySpace(FVector SpawnPoint,float Radius);
+	bool GetEmptySpace(FVector &SpawnPoint,float Radius);
 	void SpawnProp(TSubclassOf<AActor>SpawnProps, FVector SpawnLocation);
 	
 };

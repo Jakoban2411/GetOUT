@@ -28,10 +28,10 @@ void ATileActor::SpawnPointGenerator(TSubclassOf<AActor>SpawnProps,int MinSpawn,
 	}
 }
 
-bool ATileActor::GetEmptySpace(FVector SpawnPoint,float Radius)
+bool ATileActor::GetEmptySpace(FVector &SpawnPoint,float Radius)
 {
-	FVector Min(0, -2000, -191);
-	FVector Max(4000, 2000, -187);
+	FVector Min(0, -2000, 400);
+	FVector Max(4000, 2000, 600);
 	FBox Bounds = FBox(Min, Max);
 	int MaxAttempts = 100;
 	FVector CandidateKey;
@@ -80,7 +80,7 @@ bool ATileActor::CastSphere(FVector Location, float Radius)
 		UE_LOG(LogTemp,Warning,TEXT("%s is colliding"),*HitActor->GetName())
 	}
 	FColor ResultColor = HasHit ? FColor::Red : FColor::Green;
-	DrawDebugCapsule(GetWorld(), GlobalLocation, 0, Radius, FQuat::Identity, ResultColor, true, 100);
+	DrawDebugCapsule(GetWorld(),GlobalLocation, 0, Radius, FQuat::Identity, ResultColor, true, 100);
 	return !HasHit;
 }
 
