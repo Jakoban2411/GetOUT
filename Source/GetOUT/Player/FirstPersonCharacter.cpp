@@ -84,7 +84,7 @@ void AFirstPersonCharacter::BeginPlay()
 	UGameplayStatics::FinishSpawningActor(Gun, GetTransform());
 	// Bind fire event
 	InputComponent->BindAction("Fire", IE_Pressed, Gun, &AGun::OnFire);
-	Gun->AnimInstance = Mesh1P->GetAnimInstance();
+	Gun->AnimInstance1P = Mesh1P->GetAnimInstance();
 	// Show or hide the two versions of the gun based on whether or not we're using motion controllers.
 	if (bUsingMotionControllers)
 	{
