@@ -30,8 +30,8 @@ void ATileActor::SpawnPointGenerator(TSubclassOf<AActor>SpawnProps,int MinSpawn,
 
 bool ATileActor::GetEmptySpace(FVector &SpawnPoint,float Radius)
 {
-	FVector Min(0, -2000, 400);
-	FVector Max(4000, 2000, 600);
+	FVector Min(0, -2000, -190);
+	FVector Max(4000, 2000, -184);
 	FBox Bounds = FBox(Min, Max);
 	int MaxAttempts = 100;
 	FVector CandidateKey;
