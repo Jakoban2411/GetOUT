@@ -1,8 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TileActor.h"
-#include"Engine/World.h"
+#include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "PoolActComp.h"
+#include "Mannequin.h"
+#include "Classes/AI/Navigation/NavigationSystem.h"
 
 // Sets default values
 ATileActor::ATileActor()
@@ -12,25 +15,37 @@ ATileActor::ATileActor()
 
 }
 
-void ATileActor::SpawnPointGenerator(TSubclassOf<AActor>SpawnProps,int MinSpawn,int MaxSpawn,float Radius)
+void ATileActor::SpawnPointGenerator(TSubclassOf<AActor>SpawnProps,int MinSpawn,int MaxSpawn,float Radius,float ScaleMin,float ScaleMax)
 {
-	int NumbertoSpawn = FMath::RandRange(MinSpawn, MaxSpawn);
-	FVector SpawnPoint;
-	for (size_t i = 0; i <= NumbertoSpawn; i++)
+	TArray<FSpawnPointTransform> SpawnTransforms = RandomSpawnPositions(MinSpawn, MaxSpawn, Radius,ScaleMin, ScaleMax);
+	for (FSpawnPointTransform SpawnPosition : SpawnTransforms)
+		SpawnProp(SpawnProps, SpawnPosition);
+}
+
+void ATileActor::SpawnAI(TSubclassOf<APawn> AIPawn,int MinSpawn, int MaxSpawn, float Radius)
+{
+	TArray<FSpawnPointTransform> SpawnTransforms = RandomSpawnPositions(MinSpawn, MaxSpawn, Radius, 1.f, 1.f);
+	for (FSpawnPointTransform SpawnPosition : SpawnTransforms)
 	{
-		if (GetEmptySpace(SpawnPoint,Radius))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Free to Spawn"))
-			SpawnProp(SpawnProps, SpawnPoint);
-		}
-		else
-			UE_LOG(LogTemp,Warning,TEXT("SweepResult returns hit"))
+		PlaceAI(AIPawn, SpawnPosition);
 	}
+}
+
+void ATileActor::PlaceAI(TSubclassOf<APawn> &AIPawn, FSpawnPointTransform &SpawnPosition)
+{
+	APawn* SpawnedAI = GetWorld()->SpawnActor<APawn>(AIPawn);
+	if(SpawnedAI)
+		UE_LOG(LogTemp,Warning,TEXT("EXisting Somewhere"))
+	SpawnedAI->SetActorRelativeLocation(SpawnPosition.Location);
+	SpawnedAI->AttachToActor(this, FAttachmentTransformRules(EAttachmentRule::KeepRelative, false));
+	SpawnedAI->SetActorRotation(FRotator(0, SpawnPosition.Rotation, 0));
+	SpawnedAI->SpawnDefaultController();
+	SpawnedAI->Tags.Add(FName("Enemies"));
 }
 
 bool ATileActor::GetEmptySpace(FVector &SpawnPoint,float Radius)
 {
-	FVector Min(0, -2000, -190);
+	FVector Min(100, -2000, -190);
 	FVector Max(4000, 2000, -184);
 	FBox Bounds = FBox(Min, Max);
 	int MaxAttempts = 100;
@@ -47,12 +62,56 @@ bool ATileActor::GetEmptySpace(FVector &SpawnPoint,float Radius)
 	return false;
 }
 
-void ATileActor::SpawnProp(TSubclassOf<AActor>SpawnProps, FVector SpawnLocation)
+TArray<FSpawnPointTransform> ATileActor::RandomSpawnPositions(int MinSpawn, int MaxSpawn, float Radius, float MinScale, float MaxScale)
+{
+	TArray<FSpawnPointTransform> SpawnPointTransformArray;
+	FSpawnPointTransform SpawnTransform;
+	FVector SpawnPoint;
+	int NumbertoSpawn = FMath::RandRange(MinSpawn, MaxSpawn);
+
+	for (size_t i = 0; i <= NumbertoSpawn; i++)
+	{
+		SpawnTransform.Scale = FMath::RandRange(MinScale, MaxScale);
+		if (GetEmptySpace(SpawnTransform.Location, Radius*SpawnTransform.Scale))
+		{
+
+			SpawnTransform.Rotation = FMath::RandRange(-180.f, 180.f);
+			SpawnPointTransformArray.Add(SpawnTransform);
+		}
+		
+	}
+	return SpawnPointTransformArray;
+}
+
+void ATileActor::SpawnProp(TSubclassOf<AActor>SpawnProps, FSpawnPointTransform SpawnPoint)
 {
 	AActor* SpawnedProp = GetWorld()->SpawnActor<AActor>(SpawnProps);
-	SpawnedProp->SetActorRelativeLocation(SpawnLocation);
+	SpawnedProp->SetActorRelativeLocation(SpawnPoint.Location);
 	SpawnedProp->AttachToActor(this, FAttachmentTransformRules(EAttachmentRule::KeepRelative, false));
+	SpawnedProp->SetActorRotation(FRotator(0,SpawnPoint.Rotation,0));
+	SpawnedProp->SetActorScale3D(FVector(SpawnPoint.Scale));
 }
+
+
+void ATileActor::PoolSet(UPoolActComp * Pool)
+{
+	TilePool = Pool;
+	PositionNavMesh();
+}
+
+void ATileActor::PositionNavMesh()
+{
+	NavMesh = TilePool->CheckOut();
+	if (NavMesh != nullptr)
+		NavMesh->SetActorLocation(FVector(GetActorLocation().X + 2000.f,GetActorLocation().Y,GetActorLocation().Z));
+	GetWorld()->GetNavigationSystem()->Build();
+}
+
+void ATileActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	TilePool->ReturnToPool(NavMesh);
+}
+
 
 
 // Called when the game starts or when spawned
@@ -73,7 +132,7 @@ bool ATileActor::CastSphere(FVector Location, float Radius)
 {
 	FHitResult HitResult;
 	FVector GlobalLocation=ActorToWorld().TransformPosition(Location);
-	bool HasHit=GetWorld()->SweepSingleByChannel(HitResult, GlobalLocation, GlobalLocation, FQuat::Identity, ECollisionChannel::ECC_GameTraceChannel12, FCollisionShape::MakeSphere(Radius));
+	bool HasHit=GetWorld()->SweepSingleByChannel(HitResult, GlobalLocation, GlobalLocation, FQuat::Identity, ECollisionChannel::ECC_GameTraceChannel2, FCollisionShape::MakeSphere(Radius));
 	if (HasHit)
 	{
 		auto HitActor=	HitResult.Actor;

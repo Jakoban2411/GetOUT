@@ -50,8 +50,11 @@ void AMannequin::Fire()
 void AMannequin::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	Gun = GetWorld()->SpawnActorDeferred<AGun>(SpawnGun, GetTransform());
+	if (SpawnGun == nullptr) {
+		UE_LOG(LogTemp, Warning, TEXT("Gun blueprint missing."));
+		return;
+	}
+	Gun = GetWorld()->SpawnActor<AGun>(SpawnGun, GetTransform());
 	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
 	if (IsPlayerControlled())
 	{
@@ -61,8 +64,8 @@ void AMannequin::BeginPlay()
 	{
 		Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
-	UGameplayStatics::FinishSpawningActor(Gun, GetTransform());
-	Gun->SetOwner(this);
+	//UGameplayStatics::FinishSpawningActor(Gun, GetTransform());
+	//Gun->SetOwner(this);
 	Gun->AnimInstance1P = Mesh1P->GetAnimInstance();
 	Gun->AnimInstance3P = GetMesh()->GetAnimInstance();
 	if (InputComponent != nullptr)
