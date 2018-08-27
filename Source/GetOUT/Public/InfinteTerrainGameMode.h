@@ -21,5 +21,9 @@ class GETOUT_API AInfinteTerrainGameMode : public AGetOUTGameMode
 protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	UPoolActComp* CommonPool;
-	
+	int32 Score = 0;
+	UFUNCTION(BlueprintCallable,Category= Scoring)
+	void AddScore(int32 AddToScore);
+	UFUNCTION(BlueprintCallable, Category = Scoring)
+	int32 GetScore();
 };

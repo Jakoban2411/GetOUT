@@ -26,3 +26,14 @@ void AInfinteTerrainGameMode::AddToPool(ANavMeshBoundsVolume * NavMesh)
 {
 	CommonPool->Add(NavMesh);
 }
+
+void AInfinteTerrainGameMode::AddScore(int32 AddToScore)
+{
+	Score += AddToScore;
+	UE_LOG(LogTemp,Warning,TEXT("%d is Score"),Score)
+}
+
+int32 AInfinteTerrainGameMode::GetScore()
+{
+	return Score;
+}
