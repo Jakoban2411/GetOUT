@@ -125,20 +125,23 @@ void ATileActor::PlaceActor(TSubclassOf<AActor>SpawnProps, FSpawnPointTransform 
 
 void ATileActor::PoolSet(UPoolActComp * Pool)
 {
-	TilePool = Pool;
-	PositionNavMesh();
+		TilePool = Pool;
+		PositionNavMesh();
 }
 
 void ATileActor::PositionNavMesh()
 {
 	NavMesh = TilePool->CheckOut();
 	if (NavMesh != nullptr)
-		NavMesh->SetActorLocation(FVector(GetActorLocation().X + 2000.f,GetActorLocation().Y,GetActorLocation().Z));
-	GetWorld()->GetNavigationSystem()->Build();
+	{
+		NavMesh->SetActorLocation(FVector(GetActorLocation().X + 2000.f, GetActorLocation().Y, GetActorLocation().Z));
+		GetWorld()->GetNavigationSystem()->Build();
+	}
 }
 
 void ATileActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if(TilePool!=nullptr && NavMesh!=nullptr)
 	TilePool->ReturnToPool(NavMesh);
 }
 
